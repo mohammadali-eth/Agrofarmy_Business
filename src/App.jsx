@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import agroLogo from './assets/AgroFarmy Logo White.svg';
@@ -252,45 +252,17 @@ const MagneticButton = ({ children, className, onClick, type = "button", disable
   );
 };
 
-// Launch target date: October 26, 2026
-const TARGET_LAUNCH_DATE = new Date('2026-10-26T00:00:00');
-
-const calculateTimeLeft = () => {
-  const difference = TARGET_LAUNCH_DATE - new Date();
-  if (difference <= 0) {
-    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-  }
-  return {
-    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-    minutes: Math.floor((difference / 1000 / 60) % 60),
-    seconds: Math.floor((difference / 1000) % 60),
-  };
-};
-
 export default function App() {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(() => {
     return localStorage.getItem('agrofarmy_waitlist_submitted') === 'true';
   });
   const [error, setError] = useState('');
-  
-  // Calculate exact time remaining dynamically on start
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
 
   const containerRef = useRef(null);
   const bgRef = useRef(null);
   const cursorRef = useRef(null);
   const glowRef = useRef(null);
-
-  // Countdown timer logic
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   // Smooth custom mouse glow, logo cursor, & Parallax interactions
   useEffect(() => {
@@ -521,42 +493,7 @@ export default function App() {
             {/* Soft decorative glow */}
             <div className="absolute -top-12 -right-12 w-28 h-28 bg-brand-green/10 rounded-full blur-2xl pointer-events-none" />
 
-            {/* Panel Title / Telemetry Header */}
-            <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-6">
-              <span className="text-[10px] font-mono tracking-widest text-neutral-400 uppercase">
-                Launch Telemetry
-              </span>
-              <div className="flex items-center space-x-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
-                <span className="text-[9px] font-mono text-brand-green uppercase tracking-wide">
-                  Live
-                </span>
-              </div>
-            </div>
 
-            {/* Segmented Monospace Countdown */}
-            <div className="flex justify-between items-center segment-font bg-white/2 rounded-2xl p-5 border border-white/5 mb-8">
-              {[
-                { val: timeLeft.days, label: 'D' },
-                { val: timeLeft.hours, label: 'H' },
-                { val: timeLeft.minutes, label: 'M' },
-                { val: timeLeft.seconds, label: 'S' }
-              ].map((item, idx) => (
-                <React.Fragment key={idx}>
-                  <div className="flex flex-col items-center">
-                    <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                      {String(item.val).padStart(2, '0')}
-                    </span>
-                    <span className="text-[9px] font-sans font-medium text-neutral-500 tracking-wider uppercase mt-1">
-                      {item.label}
-                    </span>
-                  </div>
-                  {idx < 3 && (
-                    <span className="text-xl font-bold text-neutral-700 select-none -translate-y-2.5">:</span>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
 
             {/* Waitlist Call To Action */}
             <div className="space-y-4">
