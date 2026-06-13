@@ -242,13 +242,31 @@ const MagneticButton = ({ children, className, onClick, type = "button", disable
   );
 };
 
+// Launch target date: October 26, 2026
+const TARGET_LAUNCH_DATE = new Date('2026-10-26T00:00:00');
+
+const calculateTimeLeft = () => {
+  const difference = TARGET_LAUNCH_DATE - new Date();
+  if (difference <= 0) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  }
+  return {
+    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((difference / 1000 / 60) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+  };
+};
+
 export default function App() {
   const [email, setEmail] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(() => {
+    return localStorage.getItem('agrofarmy_waitlist_submitted') === 'true';
+  });
   const [error, setError] = useState('');
   
-  // Target date exactly 135 days from now
-  const [timeLeft, setTimeLeft] = useState({ days: 135, hours: 12, minutes: 45, seconds: 30 });
+  // Calculate exact time remaining dynamically on start
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
 
   const containerRef = useRef(null);
   const bgRef = useRef(null);
@@ -256,24 +274,8 @@ export default function App() {
 
   // Countdown timer logic
   useEffect(() => {
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + 135);
-
     const timer = setInterval(() => {
-      const now = new Date();
-      const difference = targetDate - now;
-
-      if (difference <= 0) {
-        clearInterval(timer);
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      } else {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        });
-      }
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
 
     return () => clearInterval(timer);
@@ -336,6 +338,8 @@ export default function App() {
 
     setError('');
     setIsSubmitted(true);
+    localStorage.setItem('agrofarmy_waitlist_submitted', 'true');
+    localStorage.setItem('agrofarmy_waitlist_email', email);
     setTimeout(() => {
       setEmail('');
     }, 1000);
@@ -344,33 +348,36 @@ export default function App() {
   return (
     <div 
       ref={containerRef} 
-      className="relative min-h-screen w-full flex flex-col justify-between items-center px-6 py-6 md:px-16 md:py-10 overflow-hidden bg-[#080605]"
+      className="relative min-h-screen w-full flex flex-col justify-between items-center px-6 py-6 md:px-16 md:py-10 bg-[#080605]"
     >
       {/* Custom Mouse Glow cursor */}
       <div ref={cursorRef} className="cursor-glow hidden md:block" style={{ top: 0, left: 0 }} />
 
-      {/* Cinematic background with blur depth */}
-      <div 
-        ref={bgRef}
-        className="absolute inset-0 bg-cover bg-center select-none pointer-events-none scale-102 z-0"
-        style={{ 
-          backgroundImage: `url('/farm-bg.png')`,
-        }}
-      />
+      {/* Background container wrapper to isolate and clip background assets */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        {/* Cinematic background with blur depth */}
+        <div 
+          ref={bgRef}
+          className="absolute inset-0 bg-cover bg-center select-none scale-102"
+          style={{ 
+            backgroundImage: `url('/farm-bg.png')`,
+          }}
+        />
 
-      {/* Background gradients and overlays */}
-      <div className="absolute inset-0 bg-[#080605]/75 backdrop-blur-[1px] z-0" />
-      
-      {/* Subtle organic radial gradient blobs */}
-      <div className="absolute top-[10%] left-[-10%] w-[60vw] h-[60vw] bg-brand-brown/5 rounded-full bg-blob pointer-events-none z-0" />
-      <div className="absolute bottom-[5%] right-[-10%] w-[50vw] h-[50vw] bg-brand-green/5 rounded-full bg-blob pointer-events-none z-0" />
-      
-      {/* Bottom vignette overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#080605] via-[#080605]/20 to-transparent z-0" />
+        {/* Background gradients and overlays */}
+        <div className="absolute inset-0 bg-[#080605]/75 backdrop-blur-[1px]" />
+        
+        {/* Subtle organic radial gradient blobs */}
+        <div className="absolute top-[10%] left-[-10%] w-[60vw] h-[60vw] bg-brand-brown/5 rounded-full bg-blob" />
+        <div className="absolute bottom-[5%] right-[-10%] w-[50vw] h-[50vw] bg-brand-green/5 rounded-full bg-blob" />
+        
+        {/* Bottom vignette overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#080605] via-[#080605]/20 to-transparent" />
 
-      {/* Particle Canvas & Leaves floating */}
-      <ParticleCanvas />
-      <FloatingLeaves />
+        {/* Particle Canvas & Leaves floating */}
+        <ParticleCanvas />
+        <FloatingLeaves />
+      </div>
 
       {/* Header */}
       <header className="relative w-full flex justify-center items-center z-20">
@@ -382,19 +389,6 @@ export default function App() {
         >
           <img src={agroLogo} alt="Agro Farmy" className="h-12 sm:h-14 w-auto" />
         </motion.div>
-
-        {/* Top-right Status badge */}
-        {/* <motion.div
-          className="hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full border border-white/5 bg-white/2"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
-          <span className="text-[10px] font-semibold tracking-wider text-neutral-400 uppercase">
-            Alpha 1.0 Release
-          </span>
-        </motion.div> */}
       </header>
 
       {/* Header Divider Line */}
@@ -508,7 +502,7 @@ export default function App() {
                     </span>
                   </div>
                   {idx < 3 && (
-                    <span className="text-xl font-bold text-neutral-700 select-none pb-4">:</span>
+                    <span className="text-xl font-bold text-neutral-700 select-none -translate-y-2.5">:</span>
                   )}
                 </React.Fragment>
               ))}
