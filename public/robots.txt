@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://agrofarmy.in/sitemap.xml
+Sitemap: https://agrofarmy.com/sitemap.xml
