@@ -89,6 +89,32 @@
   will-change: transform;
 }
 
+/* Custom interactive logo cursor */
+.custom-cursor {
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  z-index: 9999;
+  will-change: transform;
+  display: none;
+  filter: drop-shadow(0 2px 8px rgba(161, 178, 0, 0.3));
+}
+
+@media (min-width: 768px) {
+  .custom-cursor {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  html, body, a, button, input, textarea, select, [role="button"] {
+    cursor: none !important;
+  }
+}
+
 /* Monospace segmented display font style */
 .segment-font {
   font-family: 'JetBrains Mono', monospace;

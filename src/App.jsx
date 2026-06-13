@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
-import agroLogo from './assets/Agro Farmy Logo.svg';
+import agroLogo from './assets/AgroFarmy Logo White.svg';
+import agroIcon from './assets/Icon.svg';
 
 // Custom inline SVG icons
 const SendIcon = (props) => (
@@ -175,31 +176,37 @@ const FloatingLeaves = () => {
 
 // GSAP Magnetic Button wrapper
 const MagneticButton = ({ children, className, onClick, type = "button", disabled = false }) => {
+  const containerRef = useRef(null);
   const buttonRef = useRef(null);
 
   useEffect(() => {
+    const container = containerRef.current;
     const button = buttonRef.current;
-    if (!button || disabled) return;
+    if (!container || !button || disabled) return;
+
+    let isHovered = false;
 
     const handleMouseMove = (e) => {
       const { clientX, clientY } = e;
-      const rect = button.getBoundingClientRect();
-      const buttonCenterX = rect.left + rect.width / 2;
-      const buttonCenterY = rect.top + rect.height / 2;
+      const rect = container.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
 
-      const distanceX = clientX - buttonCenterX;
-      const distanceY = clientY - buttonCenterY;
+      const distanceX = clientX - centerX;
+      const distanceY = clientY - centerY;
       const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
 
       if (distance < 80) {
+        isHovered = true;
         gsap.to(button, {
-          x: distanceX * 0.25,
-          y: distanceY * 0.25,
-          scale: 1.01,
+          x: distanceX * 0.35,
+          y: distanceY * 0.35,
+          scale: 1.02,
           duration: 0.3,
           ease: 'power2.out',
         });
-      } else {
+      } else if (isHovered) {
+        isHovered = false;
         gsap.to(button, {
           x: 0,
           y: 0,
@@ -211,6 +218,7 @@ const MagneticButton = ({ children, className, onClick, type = "button", disable
     };
 
     const handleMouseLeave = () => {
+      isHovered = false;
       gsap.to(button, {
         x: 0,
         y: 0,
@@ -220,25 +228,27 @@ const MagneticButton = ({ children, className, onClick, type = "button", disable
       });
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    button.addEventListener('mouseleave', handleMouseLeave);
+    container.addEventListener('mousemove', handleMouseMove);
+    container.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      button.removeEventListener('mouseleave', handleMouseLeave);
+      container.removeEventListener('mousemove', handleMouseMove);
+      container.removeEventListener('mouseleave', handleMouseLeave);
     };
   }, [disabled]);
 
   return (
-    <button
-      ref={buttonRef}
-      type={type}
-      className={className}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {children}
-    </button>
+    <div ref={containerRef} className="w-full">
+      <button
+        ref={buttonRef}
+        type={type}
+        className={className}
+        onClick={onClick}
+        disabled={disabled}
+      >
+        {children}
+      </button>
+    </div>
   );
 };
 
@@ -271,6 +281,7 @@ export default function App() {
   const containerRef = useRef(null);
   const bgRef = useRef(null);
   const cursorRef = useRef(null);
+  const glowRef = useRef(null);
 
   // Countdown timer logic
   useEffect(() => {
@@ -281,26 +292,60 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Smooth custom mouse glow & Parallax interactions
+  // Smooth custom mouse glow, logo cursor, & Parallax interactions
   useEffect(() => {
     const cursor = cursorRef.current;
+    const glow = glowRef.current;
     const container = containerRef.current;
     const bg = bgRef.current;
     
     if (!container) return;
 
+    // Center the custom elements on the pointer coordinates
+    gsap.set([cursor, glow], { xPercent: -50, yPercent: -50 });
+
     const handleMouseMove = (e) => {
       const { clientX, clientY } = e;
       const { innerWidth, innerHeight } = window;
 
-      // Update custom cursor glow position
+      // Snappy cursor tracking
       if (cursor) {
         gsap.to(cursor, {
           x: clientX,
           y: clientY,
-          duration: 0.5,
+          duration: 0.1,
           ease: 'power2.out',
         });
+      }
+
+      // Smooth ambient glow tracking
+      if (glow) {
+        gsap.to(glow, {
+          x: clientX,
+          y: clientY,
+          duration: 0.6,
+          ease: 'power1.out',
+        });
+      }
+
+      // Detect hover state over interactive elements to scale/rotate logo cursor
+      if (cursor) {
+        const isInteractive = e.target.closest('a, button, input, textarea, select, [role="button"], .cursor-pointer');
+        if (isInteractive) {
+          gsap.to(cursor, {
+            scale: 1.4,
+            rotation: 15,
+            duration: 0.3,
+            overwrite: 'auto',
+          });
+        } else {
+          gsap.to(cursor, {
+            scale: 1,
+            rotation: 0,
+            duration: 0.3,
+            overwrite: 'auto',
+          });
+        }
       }
 
       // Subtle background parallax shifts
@@ -350,8 +395,13 @@ export default function App() {
       ref={containerRef} 
       className="relative min-h-screen w-full flex flex-col justify-between items-center px-6 py-6 md:px-16 md:py-10 bg-[#080605]"
     >
-      {/* Custom Mouse Glow cursor */}
-      <div ref={cursorRef} className="cursor-glow hidden md:block" style={{ top: 0, left: 0 }} />
+      {/* Custom Mouse Glow (Ambient Background) */}
+      <div ref={glowRef} className="cursor-glow hidden md:block" style={{ top: 0, left: 0 }} />
+
+      {/* Custom Interactive Logo Cursor */}
+      <div ref={cursorRef} className="custom-cursor hidden md:block" style={{ top: 0, left: 0 }}>
+        <img src={agroIcon} alt="Custom Cursor" className="w-full h-full object-contain pointer-events-none" />
+      </div>
 
       {/* Background container wrapper to isolate and clip background assets */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
@@ -550,7 +600,7 @@ export default function App() {
 
                     <MagneticButton
                       type="submit"
-                      className="w-full py-3.5 bg-brand-green text-neutral-900 font-bold rounded-xl text-[10px] tracking-widest uppercase transition-all duration-300 flex items-center justify-center space-x-2 shrink-0 border border-brand-green/20 glow-green-subtle glow-green-subtle-hover mt-3"
+                      className="w-full py-3.5 bg-brand-green text-neutral-900 font-bold rounded-xl text-[10px] tracking-widest uppercase transition-colors duration-300 flex items-center justify-center space-x-2 shrink-0 border border-brand-green/20 glow-green-subtle glow-green-subtle-hover mt-3"
                     >
                       <span>Request Invitation</span>
                       <ArrowRightIcon className="w-3.5 h-3.5" />
